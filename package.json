@@ -60,7 +60,7 @@
         "request": "^2.88.0",
         "serve-static": "^1.13.2",
         "transformer-proxy": "^0.3.4",
-        "yargs": "^16.0.0"
+        "yargs": "^17.0.0"
     },
     "devDependencies": {
         "doctoc": "2.0.1",
