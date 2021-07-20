@@ -7,7 +7,7 @@ const { flow, includes, get } = require("lodash/fp");
 const finalhandler = require("finalhandler");
 const serveStatic = require("serve-static");
 const resolveHome = require("./resolveHome");
-const HttpsProxyAgent = require("https-proxy-agent");
+const ProxyAgent = require("proxy-agent");
 const priv = {};
 
 priv.tryPlugin = (plugin, req, res, target, cb) => {
@@ -38,7 +38,7 @@ priv.doProxy = (proxy, req, res, target, confProxy = null) => {
             // pattern provided in the proxy.pattern property,
             // add a new HttpsProxyAgent
             if (regex.test(target)) {
-                options.agent = new HttpsProxyAgent(confProxy.host);
+                options.agent = new ProxyAgent(confProxy.host);
             }
         }
 
@@ -108,6 +108,7 @@ module.exports = (conf, proxy) => {
                     new RegExp(`^${routeKey}/?`),
                     "/"
                 ); // remove route path (will be replaced with disk path)
+
                 const absoluteFilePath = path.resolve(
                     conf.configDir,
                     resolveHome(route),
@@ -140,7 +141,11 @@ module.exports = (conf, proxy) => {
 
             if (conf.verbose) {
                 console.log(
-                    `GET ${c.fg.l.green}${req.url}${c.end} from ${c.fg.l.blue}${target}${c.end}`
+                    `GET ${c.fg.l.green}${req.url}${c.end} from ${
+                        c.fg.l.blue
+                    }${target.replace(new RegExp(`${req.url}$`), "")}${c.end}${
+                        c.fg.l.green
+                    }${req.url}${c.end}`
                 );
             }
 

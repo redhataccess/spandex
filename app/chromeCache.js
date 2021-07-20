@@ -1,4 +1,4 @@
-const request = require("request");
+const got = require("got");
 
 const DEFAULT_CHROME_HOST = "https://access.redhat.com";
 const DEFAULT_CHROME_PATH = "/services/chrome/";
@@ -9,53 +9,52 @@ let chromePath;
 
 async function getParts({
     host = DEFAULT_CHROME_HOST,
-    path = DEFAULT_CHROME_PATH
+    path = DEFAULT_CHROME_PATH,
+    useCached = true,
 } = {}) {
-    if (cache[host + path]) {
+    if (useCached && cache[host + path]) {
         return cache[host + path];
     }
 
-    const headReq = fetchChromePart({ host, part: "head", path });
-    const headerReq = fetchChromePart({ host, part: "header", path });
-    const footerReq = fetchChromePart({ host, part: "footer", path });
+    const headReq = fetchChromePart({host, part: "head", path});
+    const headerReq = fetchChromePart({host, part: "header", path});
+    const footerReq = fetchChromePart({host, part: "footer", path});
 
     const head = await headReq;
     const header = await headerReq;
     const footer = await footerReq;
 
-    cache[host + path] = { head, header, footer };
+    const parts = {head, header, footer};
 
-    chromeHost = host;
-    chromePath = path;
+    if (useCached) {
+        cache[host + path] = parts;
+        chromeHost = host;
+        chromePath = path;
+    }
 
-    return cache[host + path];
+    return parts;
 }
 
-function fetchChromePart({
+async function fetchChromePart({
     host = DEFAULT_CHROME_HOST,
     path = DEFAULT_CHROME_PATH,
-    part
+    part,
 } = {}) {
-    return new Promise((resolve, reject) => {
-        const url = `${host}${path}${part}?legacy=false`;
-        console.log(`fetching chrome from ${url}`);
-        request(
-            {
-                url,
-                strictSSL: false
-            },
-            function(err, response, body) {
-                if (err) {
-                    reject(err);
-                }
-                resolve(body);
-            }
-        );
-    });
+    const url = `${host}${path}${part}?legacy=false`;
+    console.log(`fetching chrome from ${url}`);
+
+    try {
+        const res = await got(url);
+        return res.body;
+    } catch (e) {
+        console.error("GOT BAD HAPPEN");
+        console.error(e);
+    }
 }
 
 module.exports = {
     chromeHost,
     chromePath,
-    getParts
+    getParts,
+    fetchChromePart,
 };

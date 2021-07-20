@@ -57,6 +57,7 @@ async function create(incomingConfig = {}, configDir = __dirname) {
 
     // choose a port for the internal proxy, avoiding the external port just chosen
     incomingConfig.internalPort = await porty.find({
+        min: incomingConfig.port,
         avoids: [incomingConfig.port]
     });
 
@@ -82,14 +83,12 @@ async function fromFile(filePath = `${process.cwd()}/spandx.config.js`) {
     } catch (e) {
         if (e.toString().indexOf("Error: Cannot find module") === 0) {
             throw new ConfigOpenError(
-                `Tried to open spandx config file ${c.fg.l.cyan}${filePath}${
-                    c.end
+                `Tried to open spandx config file ${c.fg.l.cyan}${filePath}${c.end
                 } but couldn't find it, or couldn't access it.`
             );
         } else {
             throw new ConfigProcessError(
-                `Tried to process spandx config file ${c.fg.l.cyan}${filePath}${
-                    c.end
+                `Tried to process spandx config file ${c.fg.l.cyan}${filePath}${c.end
                 } ` + `but. Got an exception loading the config: ${e}`
             );
         }
@@ -185,8 +184,8 @@ function processConf(conf, configDir = __dirname) {
         });
     } else {
         // single host mode
-        conf.host = { default: conf.host };
-        webRouteHosts.forEach(r => (r.host = { default: r.host })); // convert host string to object
+        conf.host = {default: conf.host};
+        webRouteHosts.forEach(r => (r.host = {default: r.host})); // convert host string to object
     }
 
     // build a list of file paths to watch for auto-reload, by combining the

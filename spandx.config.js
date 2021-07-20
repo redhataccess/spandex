@@ -1,6 +1,6 @@
 module.exports = {
     host: {
-        local: "localhost"
+        local: "localhost",
     },
     port: "auto",
     open: !true,
@@ -14,19 +14,19 @@ module.exports = {
         // a remote QA or production server.
         "/foo/bar": {
             host: {
-                local: "http://localhost:8081"
+                local: "http://localhost:8081",
             },
-            path: "/"
+            path: "/",
         },
 
         "/baz/bat": {
             host: {
-                local: "http://localhost:8081"
-            }
-        }
+                local: "http://localhost:8081",
+            },
+        },
         // Route a URL path to an app server, and watch local files for changes.
         // This is most useful for putting a local development at a certain
         // path on your spandx server.  Includes browser-sync auto-reloading.
         // '/': { host: 'http://localhost:8080/', watch: '~/projects/my-app' },
-    }
+    },
 };

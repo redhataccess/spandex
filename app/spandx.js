@@ -63,7 +63,7 @@ async function init(confIn) {
         preserveHeaderKeyCase: true,
         autoRewrite: true,
         secure: false, // don't validate SSL/HTTPS
-        protocolRewrite: conf.protocol.replace(":", "")
+        protocolRewrite: conf.protocol.replace(":", ""),
     });
 
     //
@@ -76,11 +76,23 @@ async function init(confIn) {
         app.use(transformerProxy(chromeMiddleware.SPACommentResolver(conf)));
     }
 
+    // if configuration says to, inject fresh chrome into prechromed pages
+    if (_.get(conf, "primer.preview")) {
+        app.use(transformerProxy(chromeMiddleware.chromeSwapper(conf)));
+    }
+
     if (_.get(conf, "esi")) {
+        console.log("ESI enabled");
         app.use((res, req, next) => {
-            if (res.headers.accept.includes('text/html') || res.headers.accept.includes('*/*')) {
+            console.log("request received");
+            if (
+                res.headers.accept.includes("text/html") ||
+                res.headers.accept.includes("*/*")
+            ) {
+                console.log("it is html; applying ESI");
                 transformerProxy(createEsiMiddleware(conf))(res, req, next);
             } else {
+                console.log("it is not html");
                 next();
             }
         });
@@ -98,10 +110,10 @@ async function init(confIn) {
         console.log("These paths will be routed to the following remote hosts");
         console.log();
         console.log(
-            _.map(conf.webRoutes, route => {
+            _.map(conf.webRoutes, (route) => {
                 return conf.spandxUrl
-                    .map(url => {
-                        const env = _.findKey(conf.host, host =>
+                    .map((url) => {
+                        const env = _.findKey(conf.host, (host) =>
                             new RegExp(`${host}`).test(url)
                         );
 
@@ -123,10 +135,10 @@ async function init(confIn) {
         console.log("These paths will be routed to your local filesystem");
         console.log();
         console.log(
-            _.map(conf.diskRoutes, route => {
+            _.map(conf.diskRoutes, (route) => {
                 return conf.spandxUrl
                     .map(
-                        url =>
+                        (url) =>
                             `  ${c.fg.l.blue}${url
                                 .replace(/\/$/, "")
                                 .replace(
@@ -150,7 +162,7 @@ async function init(confIn) {
         );
         console.log();
         console.log(
-            _.map(conf.files, file => `  ${c.fg.l.cyan}${file}${c.e}`).join(
+            _.map(conf.files, (file) => `  ${c.fg.l.cyan}${file}${c.e}`).join(
                 "\n"
             )
         );
@@ -163,7 +175,7 @@ async function init(confIn) {
         console.log(
             _.map(
                 conf.rewriteRules,
-                rule =>
+                (rule) =>
                     `  ${c.fg.l.pink}${rule.match}${c.e} will be replaced with "${c.fg.d.green}${rule.replace}${c.e}"`
             ).join("\n")
         );
@@ -187,12 +199,16 @@ async function init(confIn) {
                     proxyReq: [
                         function (proxyReq, req, res) {
                             // find and set a header to keep track of the spandx origin
-                            const origin = req.headers.host.split(":")[0];
+                            const url = new URL("http://localhost/");
+                            url.hostname = req.headers.host.split(":")[0];
+                            url.port = conf.port;
+                            url.protocol = conf.bs.https ? "https:" : "http:";
+                            const origin = url.origin;
 
                             // set a header for spandx origin and env on both the request and response
                             const env = _.findKey(
                                 conf.host,
-                                (host) => host === origin
+                                (host) => host === url.hostname
                             );
 
                             [res, proxyReq].forEach((r) => {
@@ -234,7 +250,7 @@ async function init(confIn) {
             `spandx URL${
                 conf.spandxUrl.length > 1 ? "s" : ""
             }:\n\n${conf.spandxUrl
-                .map(url => `  ${c.fg.l.blue}${url}${c.end}`)
+                .map((url) => `  ${c.fg.l.blue}${url}${c.end}`)
                 .join("\n")}\n`
         );
     }
